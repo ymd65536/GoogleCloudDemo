@@ -12,13 +12,14 @@ Artifact Registry のリポジトリ一覧を取得するサンプル
 """
 
 import os
-
+import google.auth
 from google.cloud import artifactregistry_v1
 
 
 def list_repositories(project_id: str, location: str) -> None:
     # ArtifactRegistryClient は ADC を自動的に使用する
-    client = artifactregistry_v1.ArtifactRegistryClient()
+    credentials, auth_project_id = google.auth.default()
+    client = artifactregistry_v1.ArtifactRegistryClient(credentials=credentials)
 
     parent = f"projects/{project_id}/locations/{location}"
     request = artifactregistry_v1.ListRepositoriesRequest(parent=parent)
