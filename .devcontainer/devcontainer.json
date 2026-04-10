@@ -3,7 +3,8 @@
   "image": "mcr.microsoft.com/devcontainers/python:3.10",
   "postCreateCommand": "sh ./.devcontainer/postCreateCommand.sh",
   "mounts": [
-    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind"
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind",
+    "source=${localEnv:HOME}/.cert,target=/home/vscode/.cert,type=bind"
   ],
   "customizations": {
     "vscode": {
