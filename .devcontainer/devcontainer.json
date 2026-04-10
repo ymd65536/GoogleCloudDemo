@@ -2,6 +2,9 @@
   "name": "GoogleCloudDemo",
   "image": "mcr.microsoft.com/devcontainers/python:3.10",
   "postCreateCommand": "sh ./.devcontainer/postCreateCommand.sh",
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
