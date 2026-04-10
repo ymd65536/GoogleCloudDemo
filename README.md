@@ -77,3 +77,42 @@ Set the `PROJECT_ID` environment variables.
 export PROJECT_ID=`gcloud config list --format 'value(core.project)'` && echo $PROJECT_ID
 export GOOGLE_CLOUD_PROJECT=`gcloud config list --format 'value(core.project)'` && echo $GOOGLE_CLOUD_PROJECT
 ```
+
+## Troubleshooting
+
+### SSL CERTIFICATE_VERIFY_FAILED
+
+企業プロキシ環境などで自己署名CA証明書によるSSLインターセプトが行われている場合、以下のエラーが発生することがあります。
+
+```
+ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain
+```
+
+この場合、接続先からCA証明書を取得してシステムの信頼ストアに追加することで解消できます。
+
+1. プロキシのCA証明書を取得する（例: `oauth2.googleapis.com` に接続する場合）
+
+```bash
+echo | openssl s_client -connect oauth2.googleapis.com:443 -showcerts 2>/dev/null \
+  | awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/{print}' \
+  | awk 'BEGIN{c=0} /BEGIN CERT/{c++} c==2{print}' \
+  | sudo tee /usr/local/share/ca-certificates/proxy-ca.crt
+```
+
+2. システムの証明書ストアを更新する
+
+```bash
+sudo update-ca-certificates
+```
+
+3. `httplib2` が使用する `certifi` のバンドルにも追加する
+
+`httplib2` はシステム証明書ストアではなく `certifi` のバンドル（`cacert.pem`）を参照するため、以下のコマンドも実行する必要があります。
+
+```bash
+cat /usr/local/share/ca-certificates/proxy-ca.crt >> $(python3 -c "import certifi; print(certifi.where())")
+```
+
+> **注意:** `certifi` をアップグレードすると追記した内容が消えます。アップグレード後は再度このコマンドを実行してください。
+
+これにより、SSLエラーが解消されます。

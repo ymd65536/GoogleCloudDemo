@@ -4,4 +4,5 @@ echo 'source "$HOME/google-cloud-sdk/path.zsh.inc"' >> ~/.zshrc
 echo 'source "$HOME/google-cloud-sdk/completion.zsh.inc"' >> ~/.zshrc
 echo 'source "$HOME/google-cloud-sdk/path.bash.inc"' >> ~/.bashrc
 echo 'source "$HOME/google-cloud-sdk/completion.bash.inc"' >> ~/.bashrc
+echo 'export PS1="$ "' >> ~/.bashrc
 pip install --user google-api-python-client google-auth
