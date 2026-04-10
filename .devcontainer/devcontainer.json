@@ -1,0 +1,20 @@
+{
+  "name": "GoogleCloudDemo",
+  "image": "mcr.microsoft.com/devcontainers/python:3.10",
+  "mounts": [
+    "source=${localEnv:HOME},target=/home/vscode,type=bind,consistency=cached"
+  ],
+  "postCreateCommand": "sh ./.devcontainer/postCreateCommand.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "editor.formatOnSave": true
+      }
+    }
+  }
+}

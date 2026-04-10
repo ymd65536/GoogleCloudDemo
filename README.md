@@ -8,10 +8,39 @@ First, install gcloud using curl.
 curl -sSL https://sdk.cloud.google.com | bash && exec -l $SHELL && gcloud init
 ```
 
+Alternatively, you can install gcloud using the following command, which will disable prompts during installation.
+
+```bash
+curl -sSL https://sdk.cloud.google.com | bash -s -- --disable-prompts
+```
+
+Note: When using `--disable-prompts`, the PATH setup is skipped. Add the following to your `~/.bashrc` manually:
+
+```bash
+if [ -f "$HOME/google-cloud-sdk/path.bash.inc" ]; then
+  source "$HOME/google-cloud-sdk/path.bash.inc"
+fi
+if [ -f "$HOME/google-cloud-sdk/completion.bash.inc" ]; then
+  source "$HOME/google-cloud-sdk/completion.bash.inc"
+fi
+```
+
+Then reload your shell:
+
+```bash
+source ~/.bashrc
+```
+
 Then, log in with gcloud.
 
 ```bash
 gcloud auth login
+```
+
+If you are running this command in an environment without a web browser, such as a remote server, you can use the following command to log in without launching a browser.
+
+```bash
+gcloud auth login --no-launch-browser
 ```
 
 You can find your Project ID on the Google Cloud Welcome page.
@@ -46,4 +75,5 @@ Set the `PROJECT_ID` environment variables.
 
 ```bash
 export PROJECT_ID=`gcloud config list --format 'value(core.project)'` && echo $PROJECT_ID
+export GOOGLE_CLOUD_PROJECT=`gcloud config list --format 'value(core.project)'` && echo $GOOGLE_CLOUD_PROJECT
 ```
