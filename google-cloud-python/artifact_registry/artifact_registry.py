@@ -12,6 +12,9 @@ Artifact Registry のリポジトリ一覧を取得するサンプル
 """
 
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import google.auth
 from google.cloud import artifactregistry_v1
 

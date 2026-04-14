@@ -12,6 +12,9 @@ Compute Engine のインスタンス状態を取得するサンプル
 """
 
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from google.cloud import compute_v1
 

@@ -21,6 +21,9 @@ Compute Engine のインスタンスを再起動するサンプル
 
 import argparse
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from google.cloud import compute_v1
 

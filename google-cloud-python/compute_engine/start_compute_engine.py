@@ -1,37 +1,37 @@
 """
 google-cloud-python (google-cloud-compute) を使って
-Compute Engine のインスタンスを停止するサンプル
+Compute Engine のインスタンスを起動するサンプル
 
 インストール:
     pip install google-cloud-compute
 
 使い方:
     export GOOGLE_CLOUD_PROJECT=your-project-id
-    export GOOGLE_CLOUD_ZONE=asia-northeast1-a      # 省略時は asia-northeast1-a
-    export GOOGLE_CLOUD_INSTANCE=your-instance      # 停止するインスタンス名
-    python stop_compute_engine.py
-
-    # オプションで直接指定も可能
-    python stop_compute_engine.py --zone asia-northeast1-a --instance my-vm
+    export GOOGLE_CLOUD_ZONE=us-central1-a      # 省略時は us-central1-a
+    export GOOGLE_CLOUD_INSTANCE=your-instance  # 起動するインスタンス名
+    python start_compute_engine.py
 """
 
 import argparse
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from google.cloud import compute_v1
 
 from gcp_auth import _get_credentials, _get_project_id
 
 
-def stop_instance(zone: str, instance_name: str) -> None:
-    """指定したインスタンスを停止する (RUNNING → TERMINATED)。"""
+def start_instance(zone: str, instance_name: str) -> None:
+    """指定したインスタンスを起動する (TERMINATED → RUNNING)。"""
     client = compute_v1.InstancesClient(credentials=_get_credentials())
     project_id = _get_project_id()
 
-    print(f"[google-cloud-python] インスタンスを停止します: {instance_name} ({zone})")
+    print(f"[google-cloud-python] インスタンスを起動します: {instance_name} ({zone})")
 
-    # stop() は長時間オペレーションを返す
-    operation = client.stop(
+    # start() は長時間オペレーションを返す
+    operation = client.start(
         project=project_id,
         zone=zone,
         instance=instance_name,
@@ -40,15 +40,15 @@ def stop_instance(zone: str, instance_name: str) -> None:
     # オペレーションが完了するまで待機
     operation.result()
 
-    print(f"  停止完了: {instance_name}")
+    print(f"  起動完了: {instance_name}")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute Engine インスタンスを停止する")
+    parser = argparse.ArgumentParser(description="Compute Engine インスタンスを起動する")
     parser.add_argument(
         "--zone",
         default=os.environ.get("GOOGLE_CLOUD_ZONE", "asia-northeast1-a"),
-        help="ゾーン名 (デフォルト: 環境変数 GOOGLE_CLOUD_ZONE または asia-northeast1-a)",
+        help="ゾーン名 (デフォルト: 環境変数 GOOGLE_CLOUD_ZONE または us-central1-a)",
     )
     parser.add_argument(
         "--instance",
@@ -58,4 +58,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    stop_instance(args.zone, args.instance)
+    start_instance(args.zone, args.instance)
