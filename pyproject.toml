@@ -6,6 +6,7 @@ dependencies = [
     "google-cloud-artifact-registry",
     "google-cloud-compute",
     "google-auth",
+    "requests",
 ]
 
 [dependency-groups]

@@ -1,79 +1,52 @@
 """
-google-cloud-python (google-cloud-sqladmin) を使って
-Cloud SQL のインスタンスを停止するサンプル
+google.auth.transport.requests (Google Cloud Python Client) を使って
+Cloud SQL Admin REST API でインスタンスを停止するサンプル
 
 Cloud SQL の「停止」は activationPolicy を NEVER に設定することで実現します。
 
-インストール:
-    pip install google-cloud-sqladmin
-
 使い方:
     export GOOGLE_CLOUD_PROJECT=your-project-id
-    export GOOGLE_CLOUD_SQL_INSTANCE=your-instance  # 停止するインスタンス名
-    python stop_cloud_sql.py
-
-    # オプションで直接指定も可能
-    python stop_cloud_sql.py --instance my-db
+    uv run python cloud_sql/stop_cloud_sql.py --instance my-db
 """
 
 import argparse
 import os
 import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
 
-from google.cloud import sqladmin_v1
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from gcp_auth import _get_credentials, _get_project_id
+from gcp_auth import _get_authed_session, _get_project_id
+
+BASE_URL = "https://sqladmin.googleapis.com/v1"
 
 
-def _wait_for_operation(
-    project_id: str,
-    operation_name: str,
-    credentials,
-    interval: int = 5,
-) -> None:
-    """Cloud SQL オペレーションが DONE になるまでポーリングする。"""
-    ops_client = sqladmin_v1.SqlOperationsServiceClient(credentials=credentials)
+def _wait_for_operation(session, project_id: str, operation_name: str, interval: int = 5) -> None:
+    url = f"{BASE_URL}/projects/{project_id}/operations/{operation_name}"
     while True:
-        op = ops_client.get(
-            sqladmin_v1.SqlOperationsGetRequest(
-                project=project_id,
-                operation=operation_name,
-            )
-        )
-        if op.status == sqladmin_v1.Operation.SqlOperationStatus.DONE:
-            if op.error:
-                raise RuntimeError(
-                    f"オペレーションが失敗しました: {op.error.errors}"
-                )
+        op = session.get(url).json()
+        if op.get("status") == "DONE":
+            if op.get("error"):
+                raise RuntimeError(f"オペレーションが失敗しました: {op['error']}")
             break
         time.sleep(interval)
 
 
 def stop_instance(instance_name: str) -> None:
     """指定したインスタンスを停止する (activationPolicy を NEVER に設定)。"""
-    credentials = _get_credentials()
+    session = _get_authed_session()
     project_id = _get_project_id()
 
-    client = sqladmin_v1.SqlInstancesServiceClient(credentials=credentials)
-
-    # activationPolicy を NEVER に変更して停止
-    patch_body = sqladmin_v1.DatabaseInstance(
-        settings=sqladmin_v1.Settings(activation_policy="NEVER"),
-    )
-    request = sqladmin_v1.SqlInstancesPatchRequest(
-        project=project_id,
-        instance=instance_name,
-        body=patch_body,
-    )
+    body = {"settings": {"activationPolicy": "NEVER"}}
 
     print(f"[google-cloud-python] Cloud SQL インスタンスを停止します: {instance_name}")
 
-    operation = client.patch(request=request)
-    _wait_for_operation(project_id, operation.name, credentials)
-
+    resp = session.patch(
+        f"{BASE_URL}/projects/{project_id}/instances/{instance_name}", json=body
+    )
+    resp.raise_for_status()
+    operation = resp.json()
+    _wait_for_operation(session, project_id, operation["name"])
     print(f"  停止完了: {instance_name}")
 
 
@@ -86,5 +59,4 @@ if __name__ == "__main__":
         help="インスタンス名 (デフォルト: 環境変数 GOOGLE_CLOUD_SQL_INSTANCE)",
     )
     args = parser.parse_args()
-
     stop_instance(args.instance)

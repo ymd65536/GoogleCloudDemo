@@ -1,43 +1,46 @@
 """
-google-cloud-python (google-cloud-sqladmin) を使って
-Cloud SQL のインスタンス一覧を取得するサンプル
-
-インストール:
-    pip install google-cloud-sqladmin
+google.auth.transport.requests (Google Cloud Python Client) を使って
+Cloud SQL Admin REST API でインスタンス一覧を取得するサンプル
 
 使い方:
     export GOOGLE_CLOUD_PROJECT=your-project-id
-    python list_cloud_sql.py
+    uv run python cloud_sql/list_cloud_sql.py
 """
 
-from google.cloud import sqladmin_v1
+import os
+import sys
 
-from gcp_auth import _get_credentials, _get_project_id
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from gcp_auth import _get_authed_session, _get_project_id
+
+BASE_URL = "https://sqladmin.googleapis.com/v1"
 
 
 def list_instances() -> None:
     """プロジェクト内の Cloud SQL インスタンス一覧を表示する。"""
-    credentials = _get_credentials()
+    session = _get_authed_session()
     project_id = _get_project_id()
 
-    client = sqladmin_v1.SqlInstancesServiceClient(credentials=credentials)
-    request = sqladmin_v1.SqlInstancesListRequest(project=project_id)
-
-    response = client.list(request=request)
+    resp = session.get(f"{BASE_URL}/projects/{project_id}/instances")
+    resp.raise_for_status()
+    data = resp.json()
 
     print("[google-cloud-python] Cloud SQL インスタンス一覧")
     print("-" * 60)
 
-    if not response.items:
+    items = data.get("items", [])
+    if not items:
         print("  インスタンスが見つかりませんでした")
         return
 
-    for instance in response.items:
-        print(f"  名前          : {instance.name}")
-        print(f"  状態          : {instance.state.name}")
-        print(f"  DBバージョン  : {instance.database_version.name}")
-        print(f"  リージョン    : {instance.region}")
-        print(f"  ティア        : {instance.settings.tier}")
+    for instance in items:
+        settings = instance.get("settings", {})
+        print(f"  名前          : {instance['name']}")
+        print(f"  状態          : {instance.get('state', 'UNKNOWN')}")
+        print(f"  DBバージョン  : {instance.get('databaseVersion', 'UNKNOWN')}")
+        print(f"  リージョン    : {instance.get('region', 'UNKNOWN')}")
+        print(f"  ティア        : {settings.get('tier', 'UNKNOWN')}")
         print()
 
 

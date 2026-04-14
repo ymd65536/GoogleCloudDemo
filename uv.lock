@@ -306,6 +306,7 @@ dependencies = [
     { name = "google-auth" },
     { name = "google-cloud-artifact-registry" },
     { name = "google-cloud-compute" },
+    { name = "requests" },
 ]
 
 [package.dev-dependencies]
@@ -318,6 +319,7 @@ requires-dist = [
     { name = "google-auth" },
     { name = "google-cloud-artifact-registry" },
     { name = "google-cloud-compute" },
+    { name = "requests" },
 ]
 
 [package.metadata.requires-dev]
