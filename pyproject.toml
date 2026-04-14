@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     "google-cloud-artifact-registry",
     "google-cloud-compute",
+    "google-cloud-logging",
     "google-cloud-os-config",
     "google-auth",
     "requests",

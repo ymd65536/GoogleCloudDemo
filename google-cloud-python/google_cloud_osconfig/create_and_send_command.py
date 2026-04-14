@@ -31,6 +31,7 @@ GCE インスタンスを作成し、OS Config でコマンドを送信するサ
 """
 
 import argparse
+import datetime
 import os
 import sys
 import time
@@ -38,10 +39,24 @@ import uuid
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from google.cloud import compute_v1, osconfig_v1
+from google.cloud import compute_v1, logging as gcp_logging, osconfig_v1
 from google.protobuf import duration_pb2
 
-from gcp_auth import _get_credentials, _get_project_id
+from gcp_auth import _get_credentials, _get_project_id, _get_project_number
+
+# Cloud Logging のログ名
+_LOG_NAME = "osconfig-command-history"
+
+
+def _get_logger():
+    """Cloud Logging のロガーを返す。"""
+    project_id = _get_project_id()
+    client = gcp_logging.Client(
+        project=project_id,
+        credentials=_get_credentials(),
+        _use_grpc=False,
+    )
+    return client.logger(_LOG_NAME)
 
 # OS Config エージェントを有効化するメタデータキー
 _OSCONFIG_ENABLE_KEY = "enable-osconfig"
@@ -63,10 +78,16 @@ def create_instance(
     image_family: str = "debian-12",
     image_project: str = "debian-cloud",
     disk_size_gb: int = 10,
+    service_account_email: str | None = None,
 ) -> None:
     """OS Config エージェントを有効化したラベル付き GCE インスタンスを作成する。"""
     credentials = _get_credentials()
     project_id = _get_project_id()
+
+    # サービスアカウント未指定の場合はデフォルト Compute SA を使用
+    if service_account_email is None:
+        project_number = _get_project_number()
+        service_account_email = f"{project_number}-compute@developer.gserviceaccount.com"
 
     # ---- ブートディスクの設定 ----
     initialize_params = compute_v1.AttachedDiskInitializeParams(
@@ -100,6 +121,12 @@ def create_instance(
         ]
     )
 
+    # ---- サービスアカウントの設定 ----
+    service_account = compute_v1.ServiceAccount(
+        email=service_account_email,
+        scopes=["https://www.googleapis.com/auth/cloud-platform"],
+    )
+
     # ---- インスタンスリソースの組み立て ----
     instance = compute_v1.Instance(
         name=instance_name,
@@ -108,6 +135,7 @@ def create_instance(
         network_interfaces=[network_interface],
         metadata=metadata,
         labels={_MANAGED_LABEL_KEY: _MANAGED_LABEL_VALUE},
+        service_accounts=[service_account],
     )
 
     client = compute_v1.InstancesClient(credentials=credentials)
@@ -125,6 +153,7 @@ def create_instance(
     print(f"  イメージ      : {image_project}/{image_family}")
     print(f"  ラベル        : {_MANAGED_LABEL_KEY}={_MANAGED_LABEL_VALUE}")
     print(f"  OS Config     : 有効 ({_OSCONFIG_ENABLE_KEY}={_OSCONFIG_ENABLE_VALUE})")
+    print(f"  サービスアカウント: {service_account_email}")
 
     operation = client.insert(request=request)
     operation.result()
@@ -234,6 +263,23 @@ def send_command(zone: str, command: str, assignment_id: str) -> osconfig_v1.OSP
     print(f"  送信完了: {result.name}")
     print(f"  ロールアウト状態: {result.rollout_state.name}")
     print()
+
+    # Cloud Logging にコマンド送信履歴を記録
+    logger = _get_logger()
+    logger.log_struct(
+        {
+            "assignment_id": assignment_id,
+            "command": command,
+            "zone": zone,
+            "rollout_state": result.rollout_state.name,
+            "resource_name": result.name,
+            "sent_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        },
+        severity="INFO",
+    )
+    print(f"  Cloud Logging に記録しました (ログ名: {_LOG_NAME})")
+    print()
+
     return result
 
 

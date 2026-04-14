@@ -19,6 +19,18 @@ def _get_project_id():
     return project_id
 
 
+def _get_project_number() -> str:
+    """Resource Manager REST API を呼び出してプロジェクト番号を返す。"""
+    import os
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT") or _get_project_id()
+    session = _get_authed_session()
+    resp = session.get(
+        f"https://cloudresourcemanager.googleapis.com/v1/projects/{project_id}"
+    )
+    resp.raise_for_status()
+    return resp.json()["projectNumber"]
+
+
 def _get_authed_session() -> AuthorizedSession:
     """requests ベースの認証済みセッションを返す。
     google.auth.transport.requests を使うため httplib2 の SSL 問題が発生しない。
