@@ -1,0 +1,15 @@
+[project]
+name = "googleclouddemo"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "google-cloud-artifact-registry",
+    "google-cloud-compute",
+    "google-api-python-client",
+    "google-auth",
+]
+
+[dependency-groups]
+dev = [
+    "flake8",
+]

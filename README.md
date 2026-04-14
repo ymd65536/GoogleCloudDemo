@@ -96,6 +96,50 @@ export PROJECT_ID=`gcloud config list --format 'value(core.project)'` && echo $P
 export GOOGLE_CLOUD_PROJECT=`gcloud config list --format 'value(core.project)'` && echo $GOOGLE_CLOUD_PROJECT
 ```
 
+## uvによる実行手順
+
+### 1. uvのインストール
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### 2. 依存パッケージのインストール
+
+```bash
+uv sync
+```
+
+### 3. 環境変数の設定
+
+```bash
+export GOOGLE_CLOUD_PROJECT=`gcloud config list --format 'value(core.project)'` && echo $GOOGLE_CLOUD_PROJECT
+export GOOGLE_CLOUD_LOCATION=asia-northeast1   # Artifact Registry 用（省略時は asia-northeast1）
+export GOOGLE_CLOUD_ZONE=us-central1-a         # Compute Engine 用（省略時は us-central1-a）
+```
+
+### 4. スクリプトの実行
+
+**google-cloud-python を使う場合**
+
+```bash
+# Artifact Registry リポジトリ一覧
+uv run python google-cloud-python/artifact_registry.py
+
+# Compute Engine インスタンス一覧
+uv run python google-cloud-python/compute_engine.py
+```
+
+**google-api-python-client を使う場合**
+
+```bash
+# Artifact Registry リポジトリ一覧
+uv run python google-api-python-client/artifact_registry.py
+
+# Compute Engine インスタンス一覧
+uv run python google-api-python-client/compute_engine.py
+```
+
 ## Troubleshooting
 
 ### SSL CERTIFICATE_VERIFY_FAILED
