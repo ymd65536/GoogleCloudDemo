@@ -282,6 +282,22 @@ wheels = [
 ]
 
 [[package]]
+name = "google-cloud-os-config"
+version = "1.24.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "grpcio" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a6/3a/4bf339ca4103739cb6977696e31a4fc3cb2c6204443855df77f4236043fb/google_cloud_os_config-1.24.0.tar.gz", hash = "sha256:ddf64eac47c0da9483d573b7de9abed48a5a6cbe27931ae94396899f598e0192", size = 306423, upload-time = "2026-03-26T22:17:30.417Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/76/c3b3aeaf5df547ea1127563a18f7022d19dc2ca800fcfee15f5e13406491/google_cloud_os_config-1.24.0-py3-none-any.whl", hash = "sha256:9abae5b6d25eda6047a1da81e3fdef4871f100fe8a0b4bc0b043c52673dd2392", size = 266494, upload-time = "2026-03-26T22:13:23.5Z" },
+]
+
+[[package]]
 name = "googleapis-common-protos"
 version = "1.74.0"
 source = { registry = "https://pypi.org/simple" }
@@ -306,6 +322,7 @@ dependencies = [
     { name = "google-auth" },
     { name = "google-cloud-artifact-registry" },
     { name = "google-cloud-compute" },
+    { name = "google-cloud-os-config" },
     { name = "requests" },
 ]
 
@@ -319,6 +336,7 @@ requires-dist = [
     { name = "google-auth" },
     { name = "google-cloud-artifact-registry" },
     { name = "google-cloud-compute" },
+    { name = "google-cloud-os-config" },
     { name = "requests" },
 ]
 
