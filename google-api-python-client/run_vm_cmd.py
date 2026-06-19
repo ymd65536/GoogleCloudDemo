@@ -12,7 +12,7 @@ google-cloud-osconfig で非対話コマンドを実行する。
 
 使い方:
     python run_vm_cmd.py --instance-id my-instance --command "df -h"
-    python run_vm_cmd.py --instance-id {インスタンスID} --command "uptime"
+    .venv/bin/python google-api-python-client/run_vm_cmd.py --instance-id {} --command "uptime"
 """
 
 import argparse
