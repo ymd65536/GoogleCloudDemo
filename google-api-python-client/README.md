@@ -223,6 +223,85 @@ Compute Engine API でインスタンス情報を解決し、IAP (Identity-Aware
 
 ---
 
+### iap_ssh_min.py
+
+`iap_ssh.py` から `gcloud` 依存を完全に排除した最小実装です。
+`google-cloud-compute` でインスタンス解決し、Python stdlib WebSocket で IAP TCP トンネルを確立して system `ssh` に接続します。
+
+```bash
+# コマンドを実行して結果を表示
+.venv/bin/python iap_ssh_min.py --instance-id {インスタンスID} --command "df -h"
+
+# 数値IDでも可
+.venv/bin/python iap_ssh_min.py --instance-id {インスタンスID} --command "uptime"
+
+# インタラクティブシェルを開く
+.venv/bin/python iap_ssh_min.py --instance-id {インスタンスID}
+```
+
+| オプション | 説明 | デフォルト |
+|---|---|---|
+| `--instance-id` | インスタンス名または数値ID（必須） | — |
+| `--zone` | ゾーン名（省略時は自動検索） | `GOOGLE_CLOUD_ZONE` |
+| `--project` | GCP プロジェクトID | `GOOGLE_CLOUD_PROJECT` |
+| `--command` | リモートで実行するコマンド（省略時はインタラクティブ） | なし |
+| `--user` | SSH ユーザー名 | OS Login のデフォルト |
+| `--port` | SSH ポート番号 | `22` |
+
+**`iap_ssh.py` との違い:**
+
+| 項目 | `iap_ssh.py` | `iap_ssh_min.py` |
+|---|---|---|
+| gcloud | 必要（ProxyCommand に使用） | 不要 |
+| Compute API | `google-api-python-client` | `google-cloud-compute` (compute_v1) |
+| トンネル | `gcloud compute ssh --tunnel-through-iap` | Python stdlib WebSocket |
+
+---
+
+### run_vm_cmd.py
+
+**SSH・WebSocket・gcloud をすべて使わず** `google-cloud-compute` + `google-cloud-osconfig` だけで VM にコマンドを実行します。
+インタラクティブ操作（対話シェル）は不可ですが、非対話コマンドの実行結果取得はこれが最もシンプルです。
+
+```bash
+# インスタンス名でコマンドを実行
+.venv/bin/python run_vm_cmd.py --instance-id {インスタンスID} --command "df -h"
+
+# 数値IDでも可
+.venv/bin/python run_vm_cmd.py --instance-id {インスタンスID} --command "uptime"
+```
+
+| オプション | 説明 | デフォルト |
+|---|---|---|
+| `--instance-id` | インスタンス名または数値ID（必須） | — |
+| `--command` | 実行するシェルコマンド（必須） | — |
+| `--zone` | ゾーン名（省略時は自動検索） | `GOOGLE_CLOUD_ZONE` |
+| `--project` | GCP プロジェクトID | `GOOGLE_CLOUD_PROJECT` |
+
+**処理の流れ:**
+
+```
+① compute_v1.InstancesClient で名前/ゾーン解決
+② 一時ラベル付与 (set_labels, LRO 自動待機)
+③ osconfig_v1 で OSPolicyAssignment 作成・ロールアウト (.result() で自動待機)
+④ list_os_policy_assignment_reports でコマンド出力を取得
+⑤ Assignment 削除 + ラベル削除
+```
+
+> **注意:** VM で `google-osconfig-agent` が稼働している必要があります。
+> ```bash
+> sudo systemctl status google-osconfig-agent
+> ```
+
+**必要な権限:**
+
+| 操作 | 必要なロール |
+|---|---|
+| OSPolicyAssignment の作成・削除 | `roles/osconfig.osPolicyAssignmentAdmin` |
+| インスタンスラベルの操作 | `roles/compute.instanceAdmin.v1` |
+
+---
+
 ## OS Config の仕組み
 
 `send_command.py` / `run_command.py` / `gc-compute-run-task.py` はすべて OS Config の **OSPolicyAssignment + ExecResource** パターンを使用しています。
